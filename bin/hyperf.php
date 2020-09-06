@@ -8,10 +8,12 @@ error_reporting(E_ALL);
 date_default_timezone_set('Asia/Shanghai');
 
 ! defined('USE_REDIS') && define('USE_REDIS', true);
+! defined('MAX_MUSICLENGTH') && define('MAX_MUSICLENGTH', 360);
 ! defined('BASE_PATH') && define('BASE_PATH', dirname(__DIR__, 1));
 ! defined('SWOOLE_HOOK_FLAGS') && define('SWOOLE_HOOK_FLAGS', SWOOLE_HOOK_ALL);
 
 require BASE_PATH . '/vendor/autoload.php';
+require BASE_PATH . '/app/Helper.php';
 
 // Self-called anonymous function that creates its own scope and keep the global namespace clean.
 (function () {

@@ -22,6 +22,8 @@ ENV TIMEZONE=${timezone:-"Asia/Shanghai"} \
 # update
 RUN set -ex \
     && apk update \
+    && apk add python3 \
+    && apk add mutagen \
     # install composer
     && cd /tmp \
     && wget https://github.com/composer/composer/releases/download/${COMPOSER_VERSION}/composer.phar \
@@ -47,15 +49,15 @@ RUN set -ex \
     && rm -rf /var/cache/apk/* /tmp/* /usr/share/man \
     && echo -e "\033[42;37m Build Completed :).\033[0m\n"
 
-WORKDIR /opt/www
+WORKDIR /var/www
 
 # Composer Cache
 # COPY ./composer.* /opt/www/
 # RUN composer install --no-dev --no-scripts
 
-COPY . /opt/www
+COPY . /var/www
 RUN composer install --no-dev -o && php bin/hyperf.php
 
-EXPOSE 9501
+EXPOSE 9502 9501
 
-ENTRYPOINT ["php", "/opt/www/bin/hyperf.php", "start"]
+ENTRYPOINT ["php", "/var/www/bin/hyperf.php", "start"]

@@ -11,3 +11,7 @@ vendor/
 .DS_Store
 *.lock
 .phpunit*
+logs
+musiclist.json
+musicshow.json
+/tmp

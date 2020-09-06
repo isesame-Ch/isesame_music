@@ -11,7 +11,7 @@ class MyLog
      */
     public function getLoggerLevel($level)
     {
-        $levelGroup = ["DEBUG", "INFO", "WARNING", "ERROR"];
+        $levelGroup = ["DEBUG", "INFO", "WARNING", "ERROR", "console"];
         return $levelGroup[$level] ?? "INFO";
     }
 

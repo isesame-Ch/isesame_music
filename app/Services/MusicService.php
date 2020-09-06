@@ -1,22 +1,29 @@
 <?php
 
 
-namespace app\Services;
+namespace App\Services;
 
 
+use App\Helper;
 use App\Utils\MyLog;
 use Hyperf\Redis\Redis;
 use Hyperf\Utils\ApplicationContext;
 
 class MusicService
 {
-    protected $server;
     protected $musicApi;
     protected $logger;
+    protected $debug;
+    // 等待列表
+    const MUSIC_LIST_KEY = 'syncmusic-list';
+    // 用于显示在网页上的音乐列表
+    const MUSIC_SHOW_KEY = 'syncmusic-show';
+    const MUSIC_INFO = 'music-play';
+    const USER_SEND_KEY = 'user-last-send';
 
     public function __construct()
     {
-        $this->debug = env('APP_DEBUG', true);
+        $this->debug = env('APP_DEBUG', false);
         $this->musicApi = env('MUSIC_API', 'https://cdn.zerodream.net/netease');
         $this->logger = ApplicationContext::getContainer()->get(MyLog::class);
     }
@@ -26,9 +33,13 @@ class MusicService
      *  GetMusicPlay 获取音乐已经播放的时间
      *
      */
-    public function getMusicPlay($server)
+    public function getMusicPlay()
     {
-        return $server->table->get((string)0, "music_play") ?? 0;
+        $container = ApplicationContext::getContainer();
+        $redis = $container->get(Redis::class);
+        $data = $redis->lIndex(self::MUSIC_INFO, -1);
+        $data = json_decode($data, true);
+        return $data['music_play'] ?? 0;
     }
 
     /**
@@ -41,13 +52,8 @@ class MusicService
         if(USE_REDIS) {
             $container = ApplicationContext::getContainer();
             $redis = $container->get(Redis::class);
-            $data = $redis->get("syncmusic-list");
-            $musicList = $data ?? json_decode($data, true);
-        } else {
-            $musicList = json_decode($this->server->table->get(0, "music_list"), true);
-        }
-        if(!$musicList || empty($musicList)) {
-            $musicList = [];
+            $data = $redis->get(self::MUSIC_LIST_KEY);
+            $musicList = json_decode($data, true) ?? [];
         }
         return $musicList;
     }
@@ -62,13 +68,8 @@ class MusicService
         if(USE_REDIS) {
             $container = ApplicationContext::getContainer();
             $redis = $container->get(Redis::class);
-            $data = $redis->get("syncmusic-show");
-            $sourceList = $data ?? json_decode($data, true);
-        } else {
-            $sourceList = json_decode($this->server->table->get(0, "music_show"), true);
-        }
-        if(!$sourceList || empty($sourceList)) {
-            $sourceList = [];
+            $data = $redis->get(self::MUSIC_SHOW_KEY);
+            $sourceList = json_decode($data, true) ?? [];
         }
         return $sourceList;
     }
@@ -85,10 +86,10 @@ class MusicService
             $musicLrcs = @file_get_contents("https://music.163.com/api/song/lyric?os=pc&lv=-1&id={$id}");
             echo $this->debug ? $this->logger->consoleLog("Http Request << " . substr($musicLrcs, 0, 256), 0) : "";
             if(strlen($musicLrcs) > 0) {
-                @file_put_contents(ROOT . "/tmp/{$id}.lrc", $musicLrcs);
+                @file_put_contents(BASE_PATH . "/tmp/{$id}.lrc", $musicLrcs);
             }
         } else {
-            $musicLrcs = @file_get_contents(ROOT . "/tmp/{$id}.lrc");
+            $musicLrcs = @file_get_contents(BASE_PATH . "/tmp/{$id}.lrc");
         }
         $lrcs = "[00:01.00]暂无歌词";
         $lrc = json_decode($musicLrcs, true);
@@ -221,9 +222,13 @@ EOF;
      *  GetMusicTime 获取当前正在播放的音乐的结束时间
      *
      */
-    public function getMusicTime($server)
+    public function getMusicTime()
     {
-        return $server->table->get(0, "music_time") ?? 0;
+        $container = ApplicationContext::getContainer();
+        $redis = $container->get(Redis::class);
+        $data = $redis->lIndex(self::MUSIC_INFO, -1);
+        $data = json_decode($data, true);
+        return $data['music_time'] ?? 0;
     }
 
     /**
@@ -231,9 +236,13 @@ EOF;
      *  GetMusicLong 获取音乐开始播放的时间
      *
      */
-    public function getMusicLong($server)
+    public function getMusicLong()
     {
-        return $server->table->get(0, "music_long") ?? time();
+        $container = ApplicationContext::getContainer();
+        $redis = $container->get(Redis::class);
+        $data = $redis->lIndex(self::MUSIC_INFO, -1);
+        $data = json_decode($data, true);
+        return $data['music_long'] ?? time();
     }
 
     /**
@@ -252,9 +261,13 @@ EOF;
      *  GetBannedIp 获取已经被封禁的 IP
      *
      */
-    public function getBannedIp($server)
+    public function getBannedIp()
     {
-        return $server->table->get(0, "banned_ips") ?? "";
+        $container = ApplicationContext::getContainer();
+        $redis = $container->get(Redis::class);
+        $data = $redis->lIndex(self::MUSIC_INFO, -1);
+        $data = json_decode($data, true);
+        return $data['banned_ips'] ?? [];
     }
 
     /**
@@ -264,7 +277,7 @@ EOF;
      */
     public function getMusicLength($id)
     {
-        return FloatVal(shell_exec(PYTHON_EXEC . " getlength.py " . BASE_PATH . "/tmp/{$id}.mp3"));
+        return FloatVal(shell_exec('python3 ' . BASE_PATH."/getlength.py " . BASE_PATH . "/tmp/{$id}.mp3"));
     }
 
     /**
@@ -302,10 +315,13 @@ EOF;
      *  GetNeedSwitch 获取需要切歌的投票用户列表
      *
      */
-    public function getNeedSwitch($server)
+    public function getNeedSwitch()
     {
-        $switchList = $server->table->get(0, "needswitch");
-        return is_string($switchList) ? count(explode(";", $switchList)) : 0;
+        $container = ApplicationContext::getContainer();
+        $redis = $container->get(Redis::class);
+        $data = $redis->lIndex(self::MUSIC_INFO, -1);
+        $data = json_decode($data, true);
+        return $data['needswitch'] ?? [];
     }
 
     /**
@@ -313,9 +329,12 @@ EOF;
      *  GetTotalUsers 获取当前所有在线的客户端数量
      *
      */
-    public function getTotalUsers($server)
+    public function getTotalUsers()
     {
-        return $server->connections ? count($server->connections) : 0;
+        $container = ApplicationContext::getContainer();
+        $redis = $container->get(Redis::class);
+        $data = $redis->hLen(self::USER_SEND_KEY);
+        return $data ?? 0;
     }
 
     /**
@@ -328,7 +347,8 @@ EOF;
         $data = @file_get_contents(BASE_PATH . "/random.txt");
         $exp = explode("\n", $data);
         if(count($exp) > 0) {
-            $rand = trim($exp[mt_rand(0, count($exp) - 1)]);
+            $rand_key = mt_rand(0, count($exp) - 1);
+            $rand = trim($exp[$rand_key]);
         } else {
             $rand = false;
         }
@@ -340,101 +360,173 @@ EOF;
      *  SearchMusic 搜索音乐
      *
      */
-    public function searchMusic($server, $data)
+    public function searchMusic($data)
     {
         $this->logger->consoleLog("正在点歌：{$data['data']}", 1, true);
 
         $musicList  = $this->getMusicList();
         $sourceList = $this->getMusicShow();
-        $this->lockSearch($server);
+        $this->lockSearch();
 
         // 开始搜索音乐
-        $json = $this->fetchMusicApi($data['data']);
-
-        if($json && !empty($json)) {
-            if(isset($json[0]['id'])) {
-                $m = $json[0];
-                // 判断是否已经点过这首歌了
-                if($this->isInArray($musicList, $m['id'])) {
-                    $this->unlockSearch($server);
-                    $server->finish(["id" => $data['id'], "action" => "msg", "data" => "这首歌已经在列表里了"]);
+        if (isset($data['channel']) && $data['channel'] == 'MIGU') {
+            $miguApi = ApplicationContext::getContainer()->get(MiGuMusicApiService::class);
+            $json = $miguApi->searchMusicInfo($data['data']);
+            if($json && !empty($json)) {
+                // 判断是否点过这首歌
+                if($this->isInArray($musicList, $json['id'])) {
+                    $this->unlockSearch();
+                    return ['type' => 'fail', 'msg' => '这首歌已经在列表里了', 'list' => []];
                 } else {
-                    $artists = $this->getArtists($m['artist']);
-                    $musicUrl = $this->getMusicUrl($m['id']);
+                    $artists = $miguApi->getArtistsInfo($json['artists']);
+                    $musicUrl = $miguApi->getMusicUrl($json['id']);
                     // 如果能够正确获取到音乐 URL
-                    if($this->isBlackList($m['id']) || $this->isBlackList($m['name']) || $this->isBlackList($artists)) {
-                        $this->unlockSearch($server);
-                        $server->finish(["id" => $data['id'], "action" => "msg", "data" => "这首歌被设置不允许点播"]);
+                    if($this->isBlackList($json['id']) || $this->isBlackList($json['name']) || $this->isBlackList($artists)) {
+                        $this->unlockSearch();
+                        return ['type' => 'fail', 'msg' => '这首歌被设置不允许点播', 'list' => []];
+//                        $server->finish(["id" => $data['id'], "action" => "msg", "data" => "这首歌被设置不允许点播"]);
                     } elseif($musicUrl !== "") {
-                        $musicId = Intval($m['id']);
+                        $musicId = Intval($json['id']);
                         // 开始下载音乐
-                        $musicData = $this->fetchMusic($m, $musicUrl);
-                        $musicImage = $this->getMusicImage($m['pic_id']);
+                        $musicData = $this->fetchMusic($json, $musicUrl);
+                        $musicImage = $miguApi->getMusicImage($json['imgUrl']);
                         // 如果音乐的文件大小不为 0
                         if(strlen($musicData) > 0) {
-                            $musicTime = $this->getMusicLength($m['id']);
+                            $musicTime = $this->getMusicLength($json['id']);
                             // 如果音乐的长度为 0（说明下载失败或其他原因）
-                            if($musicTime == 0) {
-                                $this->unlockSearch($server);
-                                $server->finish(["id" => $data['id'], "action" => "msg", "data" => "歌曲下载失败，错误代码：ERROR_TIME0"]);
-                            } elseif($musicTime > MAX_MUSICLENGTH) {
-                                $this->unlockSearch($server);
-                                $server->finish(["id" => $data['id'], "action" => "msg", "data" => "歌曲太长影响他人体验，不能超过 " . MAX_MUSICLENGTH . " 秒"]);
+                            if ($musicTime == 0) {
+                                $this->unlockSearch();
+                                return ['type' => 'fail', 'msg' => '歌曲下载失败，错误代码：ERROR_TIME0', 'list' => []];
+                            } elseif ($musicTime > MAX_MUSICLENGTH) {
+                                $this->unlockSearch();
+                                return ['type' => 'fail', 'msg' => '歌曲太长影响他人体验，不能超过', 'list' => []];
                             } else {
                                 // 保存列表
                                 $clientIp = $data['id'] ? $this->getClientIp($data['id']) : "127.0.0.1";
                                 $musicList[] = [
                                     "id"      => $musicId,
-                                    "name"    => $m['name'],
+                                    "name"    => $json['name'],
                                     "file"    => $musicUrl,
                                     "time"    => $musicTime,
-                                    "album"   => $m['album'],
+                                    "album"   => $json['album']['name'],
                                     "artists" => $artists,
                                     "image"   => $musicImage,
                                     "user"    => $clientIp
                                 ];
                                 $sourceList[] = [
                                     "id"      => $musicId,
-                                    "name"    => $m['name'],
+                                    "name"    => $json['name'],
                                     "file"    => $musicUrl,
                                     "time"    => $musicTime,
-                                    "album"   => $m['album'],
+                                    "album"   => $json['album']['name'],
                                     "artists" => $artists,
                                     "image"   => $musicImage,
                                     "user"    => $clientIp
                                 ];
-                                $this->setMusicList($musicList, $server);
-                                $this->setMusicShow($sourceList,$server);
+                                $this->setMusicList($musicList);
+                                $this->setMusicShow($sourceList);
                                 // 播放列表更新
                                 $playList = $this->getPlayList($sourceList);
-                                // 广播给所有客户端
-                                if($data['id'] && $server->connections) {
-                                    foreach($server->connections as $id) {
-                                        $server->push($id, json_encode([
-                                            "type" => "list",
-                                            "data" => $playList
-                                        ]));
-                                    }
-                                }
-                                $this->unlockSearch($server);
-                                $server->finish(["id" => $data['id'], "action" => "msg", "data" => "点歌成功"]);
+                                $this->unlockSearch();
+                                return ['type' => 'success', 'msg' => '点歌成功', 'list' => $playList];
                             }
                         } else {
-                            $this->unlockSearch($server);
-                            $server->finish(["id" => $data['id'], "action" => "msg", "data" => "歌曲下载失败，错误代码：ERROR_FILE_EMPTY"]);
+                            $this->unlockSearch();
+                            return ['type' => 'fail', 'msg' => '歌曲下载失败，错误代码：ERROR_FILE_EMPTY', 'list' => []];
                         }
                     } else {
-                        $this->unlockSearch($server);
-                        $server->finish(["id" => $data['id'], "action" => "msg", "data" => "歌曲下载失败，错误代码：ERROR_URL_EMPTY"]);
+                        $this->unlockSearch();
+                        return ['type' => 'fail', 'msg' => '歌曲下载失败，错误代码：ERROR_URL_EMPTY', 'list' => []];
                     }
                 }
             } else {
-                $this->unlockSearch($server);
-                $server->finish(["id" => $data['id'], "action" => "msg", "data" => "歌曲下载失败，错误代码：ERROR_ID_EMPTY"]);
+                $this->unlockSearch();
+                return ['type' => 'fail', 'msg' => '为搜索到此歌曲', 'list' => []];
             }
         } else {
-            $this->unlockSearch($server);
-            $server->finish(["id" => $data['id'], "action" => "msg", "data" => "未搜索到此歌曲"]);
+            $json = $this->fetchMusicApi($data['data']);
+            $this->logger->consoleLog(json_encode($json),1);
+
+            if($json && !empty($json)) {
+                if(isset($json[0]['id'])) {
+                    $m = $json[0];
+                    // 判断是否已经点过这首歌了
+                    if($this->isInArray($musicList, $m['id'])) {
+                        $this->unlockSearch();
+                        return ['type' => 'fail', 'msg' => '这首歌已经在列表里了', 'list' => []];
+//                    $server->finish(["id" => $data['id'], "action" => "msg", "data" => "这首歌已经在列表里了"]);
+                    } else {
+                        $artists = $this->getArtists($m['artist']);
+                        $musicUrl = $this->getMusicUrl($m['id']);
+                        // 如果能够正确获取到音乐 URL
+                        if($this->isBlackList($m['id']) || $this->isBlackList($m['name']) || $this->isBlackList($artists)) {
+                            $this->unlockSearch();
+                            return ['type' => 'fail', 'msg' => '这首歌被设置不允许点播', 'list' => []];
+//                        $server->finish(["id" => $data['id'], "action" => "msg", "data" => "这首歌被设置不允许点播"]);
+                        } elseif($musicUrl !== "") {
+                            $musicId = Intval($m['id']);
+                            // 开始下载音乐
+                            $musicData = $this->fetchMusic($m, $musicUrl);
+                            $musicImage = $this->getMusicImage($m['pic_id']);
+                            // 如果音乐的文件大小不为 0
+                            if(strlen($musicData) > 0) {
+                                $musicTime = $this->getMusicLength($m['id']);
+                                // 如果音乐的长度为 0（说明下载失败或其他原因）
+                                if($musicTime == 0) {
+                                    $this->unlockSearch();
+                                    return ['type' => 'fail', 'msg' => '歌曲下载失败，错误代码：ERROR_TIME0', 'list' => []];
+//                                $server->finish(["id" => $data['id'], "action" => "msg", "data" => "歌曲下载失败，错误代码：ERROR_TIME0"]);
+                                } elseif($musicTime > MAX_MUSICLENGTH) {
+                                    $this->unlockSearch();
+                                    return ['type' => 'fail', 'msg' => '歌曲太长影响他人体验，不能超过', 'list' => []];
+//                                $server->finish(["id" => $data['id'], "action" => "msg", "data" => "歌曲太长影响他人体验，不能超过 " . MAX_MUSICLENGTH . " 秒"]);
+                                } else {
+                                    // 保存列表
+                                    $clientIp = $data['id'] ? $this->getClientIp($data['id']) : "127.0.0.1";
+                                    $musicList[] = [
+                                        "id"      => $musicId,
+                                        "name"    => $m['name'],
+                                        "file"    => $musicUrl,
+                                        "time"    => $musicTime,
+                                        "album"   => $m['album'],
+                                        "artists" => $artists,
+                                        "image"   => $musicImage,
+                                        "user"    => $clientIp
+                                    ];
+                                    $sourceList[] = [
+                                        "id"      => $musicId,
+                                        "name"    => $m['name'],
+                                        "file"    => $musicUrl,
+                                        "time"    => $musicTime,
+                                        "album"   => $m['album'],
+                                        "artists" => $artists,
+                                        "image"   => $musicImage,
+                                        "user"    => $clientIp
+                                    ];
+                                    $this->setMusicList($musicList);
+                                    $this->setMusicShow($sourceList);
+                                    // 播放列表更新
+                                    $playList = $this->getPlayList($sourceList);
+                                    $this->unlockSearch();
+                                    return ['type' => 'success', 'msg' => '点歌成功', 'list' => $playList];
+                                }
+                            } else {
+                                $this->unlockSearch();
+                                return ['type' => 'fail', 'msg' => '歌曲下载失败，错误代码：ERROR_FILE_EMPTY', 'list' => []];
+                            }
+                        } else {
+                            $this->unlockSearch();
+                            return ['type' => 'fail', 'msg' => '歌曲下载失败，错误代码：ERROR_URL_EMPTY', 'list' => []];
+                        }
+                    }
+                } else {
+                    $this->unlockSearch();
+                    return ['type' => 'fail', 'msg' => '歌曲下载失败，错误代码：ERROR_URL_EMPTY', 'list' => []];
+                }
+            } else {
+                $this->unlockSearch();
+                return ['type' => 'fail', 'msg' => '未搜索到此歌曲', 'list' => []];
+            }
         }
     }
 
@@ -457,7 +549,7 @@ EOF;
      */
     public function setUserNickData($data)
     {
-        @file_put_contents(ROOT . "/username.json", json_encode($data));
+        @file_put_contents(BASE_PATH . "/username.json", json_encode($data));
     }
 
     /**
@@ -471,7 +563,7 @@ EOF;
         for($i = 0;$i < count($data);$i++) {
             $result .= $data[$i] . "\n";
         }
-        @file_put_contents(ROOT . "/blacklist.txt", $result);
+        @file_put_contents(BASE_PATH . "/blacklist.txt", $result);
     }
 
     /**
@@ -481,7 +573,42 @@ EOF;
      */
     public function setLastChat($id, $time = 0)
     {
-        $this->server->chats->set($id, ["last" => $time]);
+        $container = ApplicationContext::getContainer();
+        $redis = $container->get(Redis::class);
+        $userData = json_decode($redis->hGet((string)self::USER_SEND_KEY, (string)$id),true) ?? [];
+        if (empty($userData)) {
+            $userData = [
+                'ip' => '',
+                'last' => $time
+            ];
+        } else {
+            $redis->hDel(self::USER_SEND_KEY, (string)$id);
+            $userData['last'] = $time;
+        }
+        return $redis->hSet(self::USER_SEND_KEY, (string)$id, json_encode($userData));
+    }
+
+
+    /**
+     *
+     *  SetLastChat 设置客户端IP
+     *
+     */
+    public function setUserIp($id, $ip)
+    {
+        $container = ApplicationContext::getContainer();
+        $redis = $container->get(Redis::class);
+        $userData = json_decode($redis->hGet(self::USER_SEND_KEY, (string)$id),true) ?? [];
+        if (empty($userData)) {
+            $userData = [
+                'ip' => $ip,
+                'last' => 0
+            ];
+        } else {
+            $redis->hDel(self::USER_SEND_KEY, (string)$id);
+            $userData['ip'] = $ip;
+        }
+        return $redis->hSet(self::USER_SEND_KEY, (string)$id, json_encode($userData));
     }
 
     /**
@@ -489,14 +616,12 @@ EOF;
      *  SetMusicList 设置等待播放的音乐列表
      *
      */
-    public function setMusicList($data, $server)
+    public function setMusicList($data)
     {
         if(USE_REDIS) {
             $container = ApplicationContext::getContainer();
             $redis = $container->get(Redis::class);
-            $redis->set("syncmusic-list", json_encode($data));
-        } else {
-            $server->table->set(0, ["music_list" => json_encode($data)]);
+            $redis->set(self::MUSIC_LIST_KEY, json_encode($data));
         }
     }
 
@@ -505,14 +630,12 @@ EOF;
      *  SetMusicShow 设置用于网页显示的音乐列表
      *
      */
-    public function setMusicShow($data, $server)
+    public function setMusicShow($data)
     {
         if(USE_REDIS) {
             $container = ApplicationContext::getContainer();
             $redis = $container->get(Redis::class);
-            $redis->set("syncmusic-show", json_encode($data));
-        } else {
-            $server->table->set(0, ["music_show" => json_encode($data)]);
+            $redis->set(self::MUSIC_SHOW_KEY, json_encode($data));
         }
     }
 
@@ -521,9 +644,13 @@ EOF;
      *  SetMusicTime 设置音乐播放的结束时间
      *
      */
-    public function setMusicTime($data, $server)
+    public function setMusicTime($time)
     {
-        $server->table->set(0, ["music_time" => $data]);
+        $container = ApplicationContext::getContainer();
+        $redis = $container->get(Redis::class);
+        $data = json_decode($redis->rPop(self::MUSIC_INFO), true);
+        $data['music_time'] = $time;
+        return $redis->rPush(self::MUSIC_INFO,json_encode($data));
     }
 
     /**
@@ -531,9 +658,13 @@ EOF;
      *  SetMusicLong 设置音乐播放的开始时间
      *
      */
-    public function setMusicLong($data, $server)
+    public function setMusicLong($time)
     {
-        $server->table->set(0, ["music_long" => $data]);
+        $container = ApplicationContext::getContainer();
+        $redis = $container->get(Redis::class);
+        $data = json_decode($redis->rPop(self::MUSIC_INFO), true);
+        $data['music_long'] = $time;
+        return $redis->rPush(self::MUSIC_INFO,json_encode($data));
     }
 
     /**
@@ -541,9 +672,13 @@ EOF;
      *  SetMusicPlay 设置音乐已经播放的时间
      *
      */
-    public function setMusicPlay($data, $server)
+    public function setMusicPlay($time)
     {
-        $server->table->set(0, ["music_play" => $data]);
+        $container = ApplicationContext::getContainer();
+        $redis = $container->get(Redis::class);
+        $data = json_decode($redis->rPop(self::MUSIC_INFO), true);
+        $data['music_play'] = $time;
+        return $redis->rPush(self::MUSIC_INFO,json_encode($data));
     }
 
     /**
@@ -551,9 +686,12 @@ EOF;
      *  SetSavedMusicList 将等待播放的音乐列表储存到硬盘
      *
      */
-    public function setSavedMusicList($server)
+    public function setSavedMusicList()
     {
-        @file_put_contents(BASE_PATH . "/musiclist.json", $server->table->get(0, "music_list"));
+        $container = ApplicationContext::getContainer();
+        $redis = $container->get(Redis::class);
+        $musicList = $redis->get(self::MUSIC_LIST_KEY);
+        @file_put_contents(BASE_PATH . "/musiclist.json", $musicList);
     }
 
     /**
@@ -561,9 +699,12 @@ EOF;
      *  SetSavedMusicShow 将用于显示在网页上的音乐列表储存到硬盘
      *
      */
-    public function setSavedMusicShow($data, $server)
+    public function setSavedMusicShow()
     {
-        @file_put_contents(BASE_PATH . "/musicshow.json", $server->table->get(0, "music_show"));
+        $container = ApplicationContext::getContainer();
+        $redis = $container->get(Redis::class);
+        $musicList = $redis->get(self::MUSIC_SHOW_KEY);
+        @file_put_contents(BASE_PATH . "/musicshow.json", $musicList);
     }
 
     /**
@@ -581,9 +722,13 @@ EOF;
      *  SetBannedIp 设置被封禁的 IP 列表
      *
      */
-    public function setBannedIp($ip, $server)
+    public function setBannedIp($ip)
     {
-        $server->table->set(0, ["banned_ips" => $ip]);
+        $container = ApplicationContext::getContainer();
+        $redis = $container->get(Redis::class);
+        $data = json_decode($redis->rPop(self::MUSIC_INFO), true);
+        $data['banned_ips'] = $ip;
+        return $redis->rPush(self::MUSIC_INFO,json_encode($data));
     }
 
     /**
@@ -591,9 +736,13 @@ EOF;
      *  SetNeedSwitch 设置需要投票切歌的用户列表
      *
      */
-    public function setNeedSwitch($data, $server)
+    public function setNeedSwitch($list)
     {
-        $server->table->set(0, ["needswitch" => $data]);
+        $container = ApplicationContext::getContainer();
+        $redis = $container->get(Redis::class);
+        $data = json_decode($redis->rPop(self::MUSIC_INFO), true);
+        $data['needswitch'] = $list;
+        return $redis->rPush(self::MUSIC_INFO,json_encode($data));
     }
 
     /**
@@ -604,8 +753,10 @@ EOF;
     public function fetchMusicApi($keyWord)
     {
         $keyWord = urlencode($keyWord);
-        echo $this->debug ? $this->logger->consoleLog("Http Request >> {$this->musicApi}/api.php?source=netease&types=search&name={$keyWord}&count=1&pages=1", 0) : "";
-        $rawdata = @file_get_contents("{$this->musicApi}/api.php?source=netease&types=search&name={$keyWord}&count=1&pages=1");
+        $url = "{$this->musicApi}/api.php?source=netease&types=search&name={$keyWord}&count=1&pages=1";
+        echo $keyWord.PHP_EOL;
+        echo $this->debug ? $this->logger->consoleLog("Http Request >> {$url}", 0) : "";
+        $rawdata = @file_get_contents("{$url}");
         echo $this->debug ? $this->logger->consoleLog("Http Request << {$rawdata}", 0) : "";
         return json_decode($rawdata, true);
     }
@@ -633,9 +784,13 @@ EOF;
      *  LockSearch 禁止点歌
      *
      */
-    public function lockSearch($server)
+    public function lockSearch()
     {
-        $server->table->set(0, ["downloaded" => 1]);
+        $container = ApplicationContext::getContainer();
+        $redis = $container->get(Redis::class);
+        $data = json_decode($redis->rPop(self::MUSIC_INFO), true);
+        $data['downloaded'] = 1;
+        return $redis->rPush(self::MUSIC_INFO,json_encode($data));
     }
 
     /**
@@ -643,9 +798,13 @@ EOF;
      *  UnlockSearch 允许点歌
      *
      */
-    public function unlockSearch($server)
+    public function unlockSearch()
     {
-        $server->table->set(0, ["downloaded" => 0]);
+        $container = ApplicationContext::getContainer();
+        $redis = $container->get(Redis::class);
+        $data = json_decode($redis->rPop(self::MUSIC_INFO), true);
+        $data['downloaded'] = 0;
+        return $redis->rPush(self::MUSIC_INFO,json_encode($data));
     }
 
     /**
@@ -653,7 +812,7 @@ EOF;
      *  IsInArray 判断指定元素是否在数组中
      *
      */
-    private function isInArray($array, $need, $key = 'id')
+    public function isInArray($array, $need, $key = 'id')
     {
         $found = false;
         foreach($array as $smi) {
@@ -670,7 +829,7 @@ EOF;
      *  IsBlackList 判断是否在黑名单音乐中
      *
      */
-    private function isBlackList($key)
+    public function isBlackList($key)
     {
         $blackList = $this->getBlackList();
         for($i = 0;$i < count($blackList);$i++) {
@@ -714,5 +873,103 @@ EOF;
         return $imgdata['url'] ?? "";
     }
 
+    /**
+     *
+     *  GetClientIp 获取客户端 IP 地址
+     *
+     */
+    public function getClientIp($id)
+    {
+        $container = ApplicationContext::getContainer();
+        $redis = $container->get(Redis::class);
+        $userData = json_decode($redis->hGet(self::USER_SEND_KEY, (string)$id),true) ?? [];
+        if (!empty($userData)) {
+            return $userData['ip'];
+        } else {
+            return '';
+        }
+    }
 
+    /**
+     *
+     *  IsBanned 判断是否已被封禁
+     *
+     */
+    public function isBanned($ip)
+    {
+        $bannedIp = $this->getBannedIp();
+        if (empty($bannedIp)) {
+            return false;
+        } else {
+            return in_array($ip, $bannedIp);
+        }
+    }
+
+    /**
+     *
+     *  GetLastChat 获取客户端最后一次发言时间
+     *
+     */
+    public function getLastChat($id)
+    {
+        $redis = ApplicationContext::getContainer()->get(Redis::class);
+        $userData = json_decode($redis->hGet((string)self::USER_SEND_KEY, (string)$id),true);
+        if (empty($userData)) {
+            return 0;
+        } else {
+            return $userData['last'];
+        }
+    }
+
+    /**
+     *
+     *  IsAdmin 判断是否是管理员
+     *
+     */
+    public function isAdmin($ip)
+    {
+        $adminIp = $this->getAdminIp();
+        return ($adminIp != "" && $adminIp == $ip);
+    }
+
+    /**
+     *
+     *  AddBlackList 增加新的黑名单关键字
+     *
+     */
+    public function addBlackList($data)
+    {
+        $blackList = $this->getBlackList();
+        $blackList[] = trim($data);
+        $this->setBlackList($blackList);
+    }
+
+    /**
+     *
+     *  GetUserMusic 获取用户点播的音乐数量
+     *
+     */
+    public function getUserMusic($ip)
+    {
+        $musicList = $this->getMusicList();
+        $userMusic = [];
+        foreach($musicList as $music) {
+            if($music['user'] == $ip) {
+                $userMusic[] = $music;
+            }
+        }
+        return $userMusic;
+    }
+
+    /**
+     *
+     *  IsLockedSearch 判断是否禁止点歌
+     *
+     */
+    public function isLockedSearch()
+    {
+        $redis = ApplicationContext::getContainer()->get(Redis::class);
+        $data = json_decode($redis->lIndex(self::MUSIC_INFO, -1), true);
+        return Intval($data['downloaded']) == 1;
+    }
 }

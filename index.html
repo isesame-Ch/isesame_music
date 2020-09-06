@@ -1,15 +1,5 @@
 <!--
-    __________    ____                   __  __           _      
-   |  _____   |  / ___| _   _ _ __   ___|  \/  |_   _ ___(_) ___ 
-   |  |    |  |  \___ \| | | | '_ \ / __| |\/| | | | / __| |/ __|
-   |  |    |  |   ___) | |_| | | | | (__| |  | | |_| \__ \ | (__ 
-  /   |   /   |  |____/ \__, |_| |_|\___|_|  |_|\__,_|___/_|\___|
- |___/   |___/          |___/                                    
-
- 此项目使用 GPL v3 协议开放源代码，您可以在遵守本协议的前提下自由修改使用
-
- 作者：Akkariin Meiko | QQ：204034 | Telegram：Akkariins
-
+ 感谢原作者Akkariin Meiko，我将原项目改成了hyperf框架
 -->
 <html>
 <head>
@@ -17,11 +7,85 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=11">
-    <title>SyncMusic - 在线点歌</title>
+    <title>ISESAME - 享籁之声</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/materialize-css@1.0.0/dist/css/materialize.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
-    <style type="text/css">body{font-size:15px;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;font-weight:400;}hr{border:2px solid rgba(0,0,0,0.1);}.background-black{background:rgba(0,0,0,0.3);width:100%;height:100%;position:absolute;}.topbar-fixed{z-index:1;position:fixed;top:0px;left:0px;}.container{margin-top:80px;}.logo-text{font-size:22px ! important;font-weight:300;position: relative;top: -2px;}.description{font-size:18px;}.table tr td,.table tr th{padding-left:16px;padding-right:16px;font-weight:400;font-size:15px;}h1,h2,h3,h4,h5{font-weight:400;}.normal-text{font-size:15px;}.input{width:100%;}#chatdata{margin-top:16px;margin-bottom:16px;height:50vh;overflow-y:auto;}#chatdata .sysmsg{padding:4px 12px 4px 12px;border-radius:12px;margin:4px 0px 4px 0px;display:inline-block;background:rgba(0,0,0,0.5);color:#FFF;}#chatdata .chat{width:100%;margin-top:12px;}#chatdata .chat .headimg{display:inline-block;width:65px;text-align:center;vertical-align:top;}#chatdata .chat .headimg img{width:45px;transition-duration:0.25s;}#chatdata .chat .headimg img:hover{box-shadow:0px 0px 8px rgba(0,0,0,0.5);}#chatdata .chat .msgbox{display:inline-block;padding-left:6px;min-width:45px;max-width:calc(100% - 10px);}#chatdata .chat .msgbox small{display:block;}#chatdata .chat .msgbox .msg img{max-width:100%;max-height:100%;}#chatdata .chat .msgbox .msg{margin-top:4px;padding:12px;background:rgba(0,0,0,0.6);border-radius:8px;word-break:break-all;display:inline-block;min-width:45px;}#chatdata .chat .hiddentime{opacity:0;transition-duration:0.25s;}#chatdata .chat .hiddentime:hover{opacity:1;}#chatdata .hidechat{display:none;}.full-width{width:100%;}#musicname,#musiclrc{word-break:break-all;}#blur-img{position:fixed;height:120vh;left:-10%;width:120vw;overflow:hidden;top:-10%;z-index:-1;}.blur-mask{display:none;position:absolute;width:100%;height:100%;background-color:#000;filter:alpha(opacity=30);-moz-opacity:0.3;opacity:0.3;top:0;left:0;overflow:hidden;}.blured-img,#blurimgsrc{width:100%;height:100%;}.table tr td,.table tr th{white-space:nowrap;}::-webkit-scrollbar{width:10px;height:10px;background:rgba(0,0,0,0);}::-webkit-scrollbar-thumb{background:#009688;border-radius:8px;margin-left:2px;margin-right:2px;}::-webkit-scrollbar-corner{background:rgba(0,0,0,0);}.actionInput a{cursor:pointer;}.livechat{margin-bottom:80px;}</style>
+    <style type="text/css">
+        body{
+            font-size:15px;
+            font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+            font-weight:400;
+        }
+        hr{border:2px solid rgba(0,0,0,0.1);}
+        .background-black{
+            background:rgba(0,0,0,0.3);
+            width:100%;
+            height:100%;
+            position:absolute;
+        }
+        .topbar-fixed{
+            z-index:1;
+            position:fixed;
+            top:0px;
+            left:0px;
+        }
+        .container{margin-top:80px;}
+        .logo-text{font-size:22px ! important;font-weight:300;position: relative;top: -2px;}
+        .description{font-size:18px;}
+        .table tr td,.table tr th{
+            padding-left:16px;
+            padding-right:16px;
+            font-weight:400;
+            font-size:15px;
+        }
+        h1,h2,h3,h4,h5{font-weight:400;}
+        .normal-text{font-size:15px;}
+        .input{width:100%;}
+        #chatdata{
+            margin-top:16px;
+            margin-bottom:16px;
+            height:50vh;
+            overflow-y:auto;
+        }
+        #chatdata .sysmsg{
+            padding:4px 12px 4px 12px;
+            border-radius:12px;
+            margin:4px 0px 4px 0px;
+            display:inline-block;
+            background:rgba(0,0,0,0.5);
+            color:#FFF;
+        }
+        #chatdata .chat{
+            width:100%;
+            margin-top:12px;
+        }
+        #chatdata .chat .headimg{
+            display:inline-block;
+            width:65px;
+            text-align:center;
+            vertical-align:top;
+        }
+        #chatdata .chat .headimg img{width:45px;transition-duration:0.25s;}
+        #chatdata .chat .headimg img:hover{box-shadow:0px 0px 8px rgba(0,0,0,0.5);}
+        #chatdata .chat .msgbox{display:inline-block;padding-left:6px;min-width:45px;max-width:calc(100% - 10px);}
+        #chatdata .chat .msgbox small{display:block;}#chatdata .chat .msgbox .msg img{max-width:100%;max-height:100%;}
+        #chatdata .chat .msgbox .msg{margin-top:4px;padding:12px;background:rgba(0,0,0,0.6);border-radius:8px;word-break:break-all;display:inline-block;min-width:45px;}
+        #chatdata .chat .hiddentime{opacity:0;transition-duration:0.25s;}
+        #chatdata .chat .hiddentime:hover{opacity:1;}
+        #chatdata .hidechat{display:none;}
+        .full-width{width:100%;}
+        #musicname,#musiclrc{word-break:break-all;}
+        #blur-img{position:fixed;height:120vh;left:-10%;width:120vw;overflow:hidden;top:-10%;z-index:-1;}
+        .blur-mask{display:none;position:absolute;width:100%;height:100%;background-color:#000;filter:alpha(opacity=30);-moz-opacity:0.3;opacity:0.3;top:0;left:0;overflow:hidden;}
+        .blured-img,#blurimgsrc{width:100%;height:100%;}
+        .table tr td,.table tr th{white-space:nowrap;}
+        ::-webkit-scrollbar{width:10px;height:10px;background:rgba(0,0,0,0);}
+        ::-webkit-scrollbar-thumb{background:#009688;border-radius:8px;margin-left:2px;margin-right:2px;}
+        ::-webkit-scrollbar-corner{background:rgba(0,0,0,0);}
+        .actionInput a{cursor:pointer;}
+        .livechat{margin-bottom:80px;}
+    </style>
 </head>
 <body class="blue-grey darken-4 white-text" onclick="checkElement(event)">
 <div id="blur-img" style="opacity: 1;">
@@ -43,7 +107,7 @@
     <div class="nav-wrapper teal">
         <ul id="nav-mobile" class="left">
             <li><a href="#" data-target="slide-out" class="sidenav-trigger waves-effect" style="display: inline-block;"><i class="material-icons">menu</i></a></li>
-            <li><a href="#" class="logo-text waves-effect"> SyncMusic 在线点歌台</a></li>
+            <li><a href="#" class="logo-text waves-effect"> ISESAME - 享籁之声</a></li>
         </ul>
     </div>
 </nav>
@@ -52,23 +116,22 @@
         <div class="user-view">
             <div class="background">
                 <div class="background-black"></div>
-                <img src="https://akariin.dev/images/background.jpg">
+                <img src="https://images.unsplash.com/photo-1465385621528-53653983a38f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjExMjU4fQ&auto=format&fit=crop&w=1653&q=80">
             </div>
-            <a href="#"><img class="circle" src="https://akariin.dev/images/avatar.jpg"></a>
-            <a href="#"><span class="white-text name">Akkariin Meiko</span></a>
-            <a href="#"><span class="white-text email">个人开发者，鸽子王</span></a>
+            <a href="#"><img class="circle" src="https://upload.jianshu.io/users/upload_avatars/16701197/c2b0be0f-1cab-4de4-9ab4-009c1a04136e.jpg?imageMogr2/auto-orient/strip|imageView2/1/w/120/h/120"></a>
+            <a href="#"><span class="white-text name">ISESAME</span></a>
+            <a href="#"><span class="white-text email">WEB开发</span></a>
         </div>
     </li>
-    <li><a class="waves-effect" href="https://tql.ink/" target="_blank">个人博客</a></li>
-    <li><a class="waves-effect" href="https://t.me/Akkariins" target="_blank">Telegram</a></li>
+    <li><a class="waves-effect" href="http://isesame.live/" target="_blank">个人博客</a></li>
+<!--    <li><a class="waves-effect" href="https://t.me/Akkariins" target="_blank">Telegram</a></li>-->
     <li><div class="divider"></div></li>
     <li><a class="subheader">社交媒体</a></li>
-    <li><a class="waves-effect" href="https://twitter.com/KasuganoSoras" target="_blank">Twitter</a></li>
-    <li><a class="waves-effect" href="https://facebook.com/KasuganoSoras" target="_blank">Facebook</a></li>
-    <li><a class="waves-effect" href="https://github.com/KasuganoSoras" target="_blank">GitHub</a></li>
+<!--    <li><a class="waves-effect" href="https://twitter.com/KasuganoSoras" target="_blank">Twitter</a></li>-->
+<!--    <li><a class="waves-effect" href="https://facebook.com/KasuganoSoras" target="_blank">Facebook</a></li>-->
+    <li><a class="waves-effect" href="https://github.com/isesame" target="_blank">GitHub</a></li>
     <li><a class="subheader">关于本项目</a></li>
-    <li><a class="waves-effect" href="https://www.v2ex.com/t/617224" target="_blank">V2EX</a></li>
-    <li><a class="waves-effect" href="https://github.com/kasuganosoras/SyncMusic" target="_blank">GitHub</a></li>
+<!--    <li><a class="waves-effect" href="https://github.com/kasuganosoras/SyncMusic" target="_blank">GitHub</a></li>-->
 </ul>
 <div class="container">
     <div class="row">
@@ -115,11 +178,10 @@
 						</span>
             </div>
             <p class="actionInput">
-                <a onclick="openedEmoji=true;$(faces).fadeIn();" id="openfaces">[ 发送表情 ]</a>&nbsp;&nbsp;
                 <a onclick="msginput.value='投票切歌';sendmsg();">[ 投票切歌 ]</a>&nbsp;&nbsp;
-                <a onclick="checkInput();" id="opensearch">[ 搜索音乐 ]</a>
+<!--                <a onclick="checkInput();" id="opensearch">[ 搜索音乐 ]</a>-->
             </p>
-            <p>提示：输入 “点歌 歌名” 即可点歌。<br>例如输入：点歌 See You Again<br>支持输入网易云音乐 ID 来点歌</p>
+            <p>提示：输入 “点歌 歌名” 即可点歌（输入 点歌 咪咕 歌名可从咪咕音乐搜索歌曲）。<br>例如输入：点歌 See You Again<br>支持输入网易云音乐 ID 来点歌</p>
             <p>遇到不好听的歌可以输入 “投票切歌”，当投票人数超过在线人数的 30% 时就会切歌。</p>
             <p>点播过于难听的歌曲例如 LostRiver 等将会被管理员切歌或从播放列表删除。</p>
             <p>输入 “设置昵称 名字” 即可设置自己的显示昵称，仅限当前客户端的 IP 地址有效。</p>
@@ -325,6 +387,7 @@
                         chat(json);
                         break;
                     case "music":
+                        console.dir(json);
                         music(json);
                         break;
                     case "list":
