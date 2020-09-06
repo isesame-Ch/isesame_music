@@ -39,3 +39,6 @@ This will start the cli-server on port `9501` and port `9502`, and bind it to al
 
 You can open index.html and links `ws://localhost:9502` to start listen your music.
 
+thanks: This project is based on [kasuganosoras/SyncMusic](https://github.com/kasuganosoras/SyncMusic), which uses the hyperf framework to refactor, fix some bugs, and add the Migu music source. Thank the original project author and the hyperf team for their contributions.
+
+致谢：这个项目是基于 [kasuganosoras/SyncMusic](https://github.com/kasuganosoras/SyncMusic) 的，使用hyperf框架重构，并修复了部分bug，添加了咪咕音乐源，在此感谢原项目作者和hyperf团队的贡献。
