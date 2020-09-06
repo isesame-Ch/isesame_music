@@ -6,7 +6,7 @@ This is a music share application named isesame_music using the Hyperf framework
 
 isesame_music has some requirements for the system environment, it can only run under Linux and Mac environment, but due to the development of Docker virtualization technology, Docker for Windows can also be used as the running environment under Windows.
 
-directly based on the already built [hyperf\hyperf](https://hub.docker.com/r/hyperf/hyperf) Image to run.
+directly based on the already built [isesame-Ch/isesame_music](https://github.com/isesame-Ch/isesame_music) Image to run.
 
 When you don't want to use Docker as the basis for your running environment, you need to make sure that your operating environment meets the following requirements:  
 
