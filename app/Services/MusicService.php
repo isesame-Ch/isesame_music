@@ -441,7 +441,7 @@ EOF;
                 }
             } else {
                 $this->unlockSearch();
-                return ['type' => 'fail', 'msg' => '为搜索到此歌曲', 'list' => []];
+                return ['type' => 'fail', 'msg' => '未搜索到此歌曲', 'list' => []];
             }
         } else {
             $json = $this->fetchMusicApi($data['data']);

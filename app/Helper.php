@@ -3,6 +3,23 @@ namespace App;
 
 class Helper
 {
+    /**
+     * Handle Swoole befareStart event
+     */
+    public function beforeStart()
+    {
+        // 检查文件夹和随机播放歌单是否存在
+        if(!file_exists(BASE_PATH . "/tmp/")) mkdir(BASE_PATH . "/tmp/");
+        if(!file_exists(BASE_PATH . "/random.txt")) {
+            $data = @file_get_contents("https://cdn.zerodream.net/download/music/random.txt");
+            @file_put_contents(BASE_PATH . "/random.txt", $data);
+        }
+    }
+
+    /**
+     * @param $url
+     * @return false|string
+     */
     public function get_redirect_url($url)
     {
         $redirect_url = null;
