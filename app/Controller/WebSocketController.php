@@ -27,7 +27,7 @@ use Hyperf\Di\Annotation\Inject;
 
 class WebSocketController implements OnMessageInterface, OnOpenInterface, OnCloseInterface
 {
-    protected $getIpMethod = true;
+    protected $getIpMethod = false;
     protected $debug;
     protected $server;
     protected $musicApi;
@@ -539,7 +539,7 @@ class WebSocketController implements OnMessageInterface, OnOpenInterface, OnClos
         if ($this->getIpMethod) {
             $clientIp = $request->header['x-real-ip'] ?? "127.0.0.1";
         } else {
-            $clientIp = $this->server->getClientInfo($request->fd)['remote_ip'] ?? "127.0.0.1";
+            $clientIp = $request->server['remote_addr'] ?? "127.0.0.1";
         }
 
         // 将客户端 IP 储存到表中
