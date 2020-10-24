@@ -33,7 +33,7 @@ services:
     image: redis:latest
     container_name: isesame_music_redis
     ports:
-      - 63790:6379
+      - 63791:6379
 configs:
   hyperf_v1.0:
     external: true

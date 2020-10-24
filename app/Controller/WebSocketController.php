@@ -125,7 +125,7 @@ class WebSocketController implements OnMessageInterface, OnOpenInterface, OnClos
 
                                         // 广播给所有客户端
                                         foreach($clients as $id) {
-                                            $server->push($id, json_encode([
+                                            $server->push((int)$id, json_encode([
                                                 "type" => "msg",
                                                 "data" => "有人希望切歌，支持请输入 “投票切歌”"
                                             ]));
@@ -155,7 +155,7 @@ class WebSocketController implements OnMessageInterface, OnOpenInterface, OnClos
                                     } else {
                                         // 广播给所有客户端
                                         foreach($clients as $id) {
-                                            $server->push($id, json_encode([
+                                            $server->push((int)$id, json_encode([
                                                 "type" => "msg",
                                                 "data" => "当前投票人数：{$countNeedSwitch}/{$totalUsers}"
                                             ]));
@@ -169,7 +169,7 @@ class WebSocketController implements OnMessageInterface, OnOpenInterface, OnClos
                                         if($userNickName) {
                                             $showUserName = "{$userNickName} ({$showUserName})";
                                         }
-                                        $server->push($id, json_encode([
+                                        $server->push((int)$id, json_encode([
                                             "type" => "chat",
                                             "user" => htmlspecialchars($showUserName),
                                             "time" => date("Y-m-d H:i:s"),
@@ -299,7 +299,7 @@ class WebSocketController implements OnMessageInterface, OnOpenInterface, OnClos
 
                                             // 广播给所有客户端
                                             foreach($clients as $id) {
-                                                $server->push($id, json_encode([
+                                                $server->push((int)$id, json_encode([
                                                     "type" => "list",
                                                     "data" => $playList
                                                 ]));
@@ -367,7 +367,7 @@ class WebSocketController implements OnMessageInterface, OnOpenInterface, OnClos
 
                                         // 广播给所有客户端
                                         foreach($clients as $id) {
-                                            $server->push($id, json_encode([
+                                            $server->push((int)$id, json_encode([
                                                 "type" => "list",
                                                 "data" => $playList
                                             ]));
@@ -465,7 +465,7 @@ class WebSocketController implements OnMessageInterface, OnOpenInterface, OnClos
                                                 if($userNickName) {
                                                     $showUserName = "{$userNickName} ({$showUserName})";
                                                 }
-                                                $server->push($id, json_encode([
+                                                $server->push((int)$id, json_encode([
                                                     "type" => "chat",
                                                     "user" => htmlspecialchars($showUserName),
                                                     "time" => date("Y-m-d H:i:s"),
@@ -499,7 +499,7 @@ class WebSocketController implements OnMessageInterface, OnOpenInterface, OnClos
                                         if($userNickName) {
                                             $showUserName = "{$userNickName} ({$showUserName})";
                                         }
-                                        $server->push($id, json_encode([
+                                        $server->push((int)$id, json_encode([
                                             "type" => "chat",
                                             "user" => htmlspecialchars($showUserName),
                                             "time" => date("Y-m-d H:i:s"),
