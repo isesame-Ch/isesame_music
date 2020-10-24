@@ -51,7 +51,8 @@ class WebSocketController implements OnMessageInterface, OnOpenInterface, OnClos
     {
         $this->logger->consoleLog($frame->data, 1,true);
 
-        $clients = $server->connections;
+        $redis = ApplicationContext::getContainer()->get(Redis::class);
+        $clients = $redis->hKeys(MusicService::USER_SEND_KEY);
         $clientIp = $this->musicService->getClientIp($frame->fd);
         $adminIp = $this->musicService->getAdminIp();
 
@@ -153,7 +154,7 @@ class WebSocketController implements OnMessageInterface, OnOpenInterface, OnClos
                                         ]));
                                     } else {
                                         // 广播给所有客户端
-                                        foreach($server->connections as $id) {
+                                        foreach($clients as $id) {
                                             $server->push($id, json_encode([
                                                 "type" => "msg",
                                                 "data" => "当前投票人数：{$countNeedSwitch}/{$totalUsers}"
@@ -297,7 +298,7 @@ class WebSocketController implements OnMessageInterface, OnOpenInterface, OnClos
                                             $this->musicService->setMusicShow($sourceList);
 
                                             // 广播给所有客户端
-                                            foreach($server->connections as $id) {
+                                            foreach($clients as $id) {
                                                 $server->push($id, json_encode([
                                                     "type" => "list",
                                                     "data" => $playList
@@ -365,7 +366,7 @@ class WebSocketController implements OnMessageInterface, OnOpenInterface, OnClos
                                         $this->musicService->setMusicShow($sourceList);
 
                                         // 广播给所有客户端
-                                        foreach($server->connections as $id) {
+                                        foreach($clients as $id) {
                                             $server->push($id, json_encode([
                                                 "type" => "list",
                                                 "data" => $playList
@@ -513,7 +514,7 @@ class WebSocketController implements OnMessageInterface, OnOpenInterface, OnClos
                         // 处理客户端发过来心跳包的操作，返回在线人数给客户端
                         $server->push($frame->fd, json_encode([
                             "type" => "online",
-                            "data" => count($server->connections)
+                            "data" => count($clients)
                         ]));
                         break;
                     default:
